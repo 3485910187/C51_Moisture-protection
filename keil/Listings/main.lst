@@ -1,0 +1,261 @@
+C51 COMPILER V9.60.7.0   MAIN                                                              04/22/2023 11:02:33 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include"reg52.h"
+   2          #include"12864.h"
+   3          #include"sht11.h"
+   4          #include"serial.h"
+   5          #include"delay.h"
+   6          #include"pwm.h"
+   7          #include"string.h"
+   8          #include"stdlib.h"
+   9          #include"stdio.h"
+  10          #include"pid.h"
+  11          #include"motor.h"
+  12          
+  13          sbit ADD = P1^2;
+  14          sbit MODE = P1^3;
+  15          sbit MINUS = P1^4;
+  16          sbit LED_red = P1^5;
+  17          sbit LED_green = P1^6;
+  18          
+  19          xdata int Threshold=15,Angle=90,IHumidity=0,OHumidity=0,T;
+  20          xdata char key_mod=0,sys_mod=0,flag=0;
+  21          code char com[4][10]={"SetModAT","SetModM","Set","Open"};
+  22          xdata char receive[10]=0;
+  23          float set_speed=0.0;
+  24          
+  25          int abs(int l)
+  26          {
+  27   1        if(l>0)return l;
+  28   1        else return l*=-1;
+  29   1      }
+  30           
+  31          void Key_Scan(bit mode)
+  32          {  
+  33   1       static bit key_up=1;//按键按松开标志
+  34   1       if(mode)key_up=1;  //支持连按    
+  35   1       if(key_up&&(ADD==0||MODE==0||MINUS==0))
+  36   1       {
+  37   2      //  DelayMs(1);//去抖动 
+  38   2        key_up=0;
+  39   2        if(ADD==0)
+  40   2        {
+  41   3          switch(key_mod%3)
+  42   3          {
+  43   4            case 0: sys_mod=0; break; 
+  44   4            case 1: if(Angle<90&&sys_mod==1)Angle++; break; 
+  45   4            case 2: if(Threshold<100)Threshold++; break;        
+  46   4          }
+  47   3        }
+  48   2        else if(MODE==0)key_mod++;
+  49   2        else if(MINUS==0)
+  50   2        {
+  51   3          switch(key_mod%3)
+  52   3          {
+  53   4            case 0: sys_mod=1; break; 
+  54   4            case 1: if(Angle>-90&&sys_mod==1)Angle--; break;  
+C51 COMPILER V9.60.7.0   MAIN                                                              04/22/2023 11:02:33 PAGE 2   
+
+  55   4            case 2: if(Threshold>0)Threshold--; break;        
+  56   4          }
+  57   3        }
+  58   2       }else if(ADD==1&&MODE==1&&MINUS==1)key_up=1;       // 无按键按下
+  59   1      }
+  60          
+  61          void lcd_display()
+  62          {
+  63   1        if(sys_mod)
+  64   1        Display_string(0,6,"Set ");
+  65   1        else
+  66   1        Display_string(0,6,"Auto");   
+  67   1      
+  68   1        Display_string(1,0,"IdH");
+  69   1        if(IHumidity<1000){
+  70   2        Display_FH(1,2,8*4,0);
+  71   2        Display_SZ(1,2,8*5,IHumidity/100);
+  72   2        Display_SZ(1,2,8*6,IHumidity%100/10);}
+  73   1        else
+  74   1        Display_string(1,4,"100");      
+  75   1        Display_string(1,9,"OdH");
+  76   1        if(OHumidity<1000){
+  77   2        Display_FH(2,2,8*5,0);
+  78   2        Display_SZ(2,2,8*6,OHumidity/100);
+  79   2        Display_SZ(2,2,8*7,OHumidity%100/10);}
+  80   1        else
+  81   1        Display_string(1,13,"100"); 
+  82   1      
+  83   1        Display_string(2,0,"Sta Open");
+  84   1        if(Angle >= 0)
+  85   1        Display_FH(2,4,8*3,1);    
+  86   1        else 
+  87   1        Display_FH(2,4,8*3,2);
+  88   1        Display_SZ(2,4,8*4,abs(Angle)/10);
+  89   1        Display_SZ(2,4,8*5,abs(Angle)%10);  
+  90   1        
+  91   1        Display_string(3,0,"Warning");  
+  92   1        Display_SZ(2,6,8*4,Threshold/10);
+  93   1        Display_SZ(2,6,8*5,Threshold%10); 
+  94   1        
+  95   1        switch(key_mod%3)
+  96   1        {
+  97   2          case 0: Display_FH(2,0,8*7,10),Display_FH(2,4,8*7,0),Display_FH(2,6,8*7,0); break;  
+  98   2          case 1: Display_FH(2,4,8*7,10),Display_FH(2,0,8*7,0),Display_FH(2,6,8*7,0); break;  
+  99   2          case 2: Display_FH(2,6,8*7,10),Display_FH(2,0,8*7,0),Display_FH(2,4,8*7,0); break;        
+ 100   2        } 
+ 101   1      }
+ 102          
+ 103          void led()
+ 104          {
+ 105   1        if(OHumidity/10-IHumidity/10 > Threshold && sys_mod == 0)
+ 106   1        {
+ 107   2          if(OHumidity > 50 && IHumidity >50)Angle=-90;
+ 108   2          LED_red = 1,LED_green = 0;
+ 109   2        }
+ 110   1        else LED_green = 1,LED_red = 0;
+ 111   1        if(IHumidity/10>70)set_speed=IHumidity/10-50;
+ 112   1        else set_speed=0.0;
+ 113   1      }
+ 114          
+ 115          void serial_send()
+ 116          {
+C51 COMPILER V9.60.7.0   MAIN                                                              04/22/2023 11:02:33 PAGE 3   
+
+ 117   1        Sendstring(1,"Id Humidity    ");
+ 118   1        if(IHumidity<1000){
+ 119   2        Sendchar(IHumidity/100+'0');
+ 120   2        Sendchar(IHumidity%100/10+'0');}
+ 121   1        else Sendstring(1,"100");
+ 122   1        Sendstring(1,"\r\n"); 
+ 123   1      
+ 124   1        Sendstring(1,"Od Humidity    ");
+ 125   1        if(OHumidity<1000){
+ 126   2        Sendchar(OHumidity/100+'0');
+ 127   2        Sendchar(OHumidity%100/10+'0');}
+ 128   1        else Sendstring(1,"100");
+ 129   1        Sendstring(1,"\r\n"); 
+ 130   1        
+ 131   1        Sendstring(1,"Sta      Open(");
+ 132   1        if(Angle >= 0)
+ 133   1        Sendchar('+');    
+ 134   1        else 
+ 135   1        Sendchar('-');  
+ 136   1        Sendchar(abs(Angle)/10+'0');
+ 137   1        Sendchar(abs(Angle)%10+'0');    
+ 138   1        Sendstring(1,")/Close");
+ 139   1        Sendstring(1,"\r\n"); 
+ 140   1        
+ 141   1        Sendstring(1,"Warning        ");  
+ 142   1        Sendchar(Threshold/10+'0');
+ 143   1        Sendchar(Threshold%10+'0'); 
+ 144   1        Sendstring(1,"\r\n\r\n\r\n");   
+ 145   1      }
+ 146          void serial_re()
+ 147          {
+ 148   1        if(flag == 1)
+ 149   1        {
+ 150   2          char cmp[8]=0,num[5]=0;
+ 151   2          int x=0,y=0;
+ 152   2          while(receive[x] != '\0')
+ 153   2          {
+ 154   3            if(receive[x] >= 'A' && receive[x] <= 'Z' || receive[x] >= 'a' && receive[x] <= 'z') 
+ 155   3            {
+ 156   4              cmp[y++] =receive[x];
+ 157   4            }     
+ 158   3            x++;
+ 159   3            if(receive[x] == '\0')cmp[y]='\0';
+ 160   3          }x=0,y=0;
+ 161   2          while(receive[x] != '\0')
+ 162   2          {
+ 163   3            if(receive[x] >= '0' && receive[x] <= '9' || receive[x] == '-') 
+ 164   3            {
+ 165   4              num[y++] =receive[x];
+ 166   4            }     
+ 167   3            x++;
+ 168   3            if(receive[x] == '\0')num[y]='\0';
+ 169   3          }x=0,y=0;   
+ 170   2          
+ 171   2          x=atoi(num);    //数字字符串转换int 函数，需要引用头文件“stdlib.h”
+ 172   2          
+ 173   2          for(y=0;y<4;y++)
+ 174   2          {
+ 175   3            if(strcmp(cmp,com[y]) == 0)break;
+ 176   3          }
+ 177   2          if(y<4)               //有指令
+ 178   2          {
+C51 COMPILER V9.60.7.0   MAIN                                                              04/22/2023 11:02:33 PAGE 4   
+
+ 179   3            switch(y)
+ 180   3            {
+ 181   4              case 0: sys_mod = 0;   break;
+ 182   4              case 1: sys_mod = 1;   break;
+ 183   4              case 2: Threshold = x; break;
+ 184   4      //        case 3: Angle = x;     break;       //写到这里输入负数显示有问题,就写到下面了
+ 185   4            }
+ 186   3          }
+ 187   2          receive[10]=0;
+ 188   2          flag=0;
+ 189   2          if(y==3 && sys_mod==1)Angle=x;                         //这里
+ 190   2        }
+ 191   1      }
+ 192          
+ 193          void main()
+ 194          {
+ 195   1        InitLCD();
+ 196   1        Serialinit();
+ 197   1        pwm_init();
+ 198   1        motor_init();
+ 199   1        pid_init(&pid_test_moto,1000,1000,6,2.3,2.5);  //6,2.3,2.5
+ 200   1        while(1)
+ 201   1        {
+ 202   2          pwm_set(Angle+90);
+ 203   2          Key_Scan(1);
+ 204   2          TH_output(SHT11_1,&T,&IHumidity);
+ 205   2          TH_output(SHT11_2,&T,&OHumidity);
+ 206   2          lcd_display();
+ 207   2          led();
+ 208   2          if(time>=100){time=0;serial_send();}   //两秒发送
+ 209   2          serial_re();
+ 210   2        }
+ 211   1      }
+ 212          
+ 213          void int0() interrupt 0    //用来计时
+ 214          {
+ 215   1            motor_time++;
+ 216   1            if(motor_time >= 100)   //定时测速1s
+ 217   1          {
+ 218   2            motor_time=0;
+ 219   2            motor_speed=motor_a*2.5;
+ 220   2            motor_a=0;
+ 221   2            pid_out=pid_calc(&pid_test_moto,motor_speed,set_speed);
+ 222   2          }
+ 223   1          
+ 224   1          if(count<(unsigned int)pid_out)
+ 225   1          motor_out=1;
+ 226   1          else
+ 227   1           motor_out=0;
+ 228   1          if(count>1000) count=0; 
+ 229   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2111    ----
+   CONSTANT SIZE    =    173    ----
+   XDATA SIZE       =     23    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4      17
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1       1
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.60.7.0   MAIN                                                              04/22/2023 11:02:33 PAGE 5   
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

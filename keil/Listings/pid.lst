@@ -1,0 +1,99 @@
+C51 COMPILER V9.60.7.0   PID                                                               04/22/2023 11:02:33 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE PID
+OBJECT MODULE PLACED IN .\Objects\pid.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE pid.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\pid.l
+                    -st) TABS(2) OBJECT(.\Objects\pid.obj)
+
+line level    source
+
+   1          #include "pid.h"
+   2          
+   3          //电机 PID 结构体定义
+   4          pid_t pid_test_moto = { 0 };
+   5          
+   6          static void abs_limit(float *a, float ABS_MAX)
+   7          {
+   8   1        if (*a > ABS_MAX)
+   9   1            *a = ABS_MAX;
+  10   1        if (*a < -ABS_MAX)
+  11   1            *a = -ABS_MAX;
+  12   1      }
+  13          
+  14          /**
+  15            * @brief     PID 初始化函数
+  16            * @param[in] pid: PID 结构体
+  17            * @param[in] max_out: 最大输出
+  18            * @param[in] intergral_limit: 积分限幅
+  19            * @param[in] kp/ki/kd: 具体 PID 参数
+  20            */
+  21          void pid_init(pid_t *pid, unsigned int max_out, unsigned int intergral_limit, float kp, float ki, float kd
+             -)
+  22          {
+  23   1        pid->integral_limit = intergral_limit;
+  24   1        pid->max_output     = max_out;
+  25   1      
+  26   1        pid->p = kp;
+  27   1        pid->i = ki;
+  28   1        pid->d = kd;
+  29   1      }
+  30          
+  31          /**
+  32            * @brief     PID 计算函数，使用位置式 PID 计算
+  33            * @param[in] pid: PID 结构体
+  34            * @param[in] get: 反馈数据
+  35            * @param[in] set: 目标数据
+  36            * @retval    PID 计算输出
+  37            */
+  38          float pid_calc(pid_t *pid, float get, float set)
+  39          {
+  40   1        pid->get = get;
+  41   1        pid->set = set;
+  42   1        pid->err[NOW] = set - get; 
+  43   1        
+  44   1        pid->pout = pid->p * pid->err[NOW];
+  45   1        pid->iout += pid->i * pid->err[NOW];
+  46   1        pid->dout = pid->d * (pid->err[NOW] - pid->err[LAST]);
+  47   1      
+  48   1        abs_limit(&(pid->iout), pid->integral_limit);
+  49   1        pid->out = pid->pout + pid->iout + pid->dout;
+  50   1        abs_limit(&(pid->out), pid->max_output);
+  51   1      
+  52   1        pid->err[LAST]  = pid->err[NOW];
+  53   1        if(pid->out<=0)pid->out=0;
+C51 COMPILER V9.60.7.0   PID                                                               04/22/2023 11:02:33 PAGE 2   
+
+  54   1        return pid->out;
+  55   1      }
+  56          
+  57          /**
+  58            * @brief     PID 参数复位函数
+  59            * @param[in] pid: PID 结构体
+  60            * @param[in] kp/ki/kd: 具体 PID 参数
+  61            */
+  62          void pid_reset(pid_t *pid, float kp, float ki, float kd)
+  63          {
+  64   1        pid->p = kp;
+  65   1        pid->i = ki;
+  66   1        pid->d = kd;
+  67   1        
+  68   1        pid->pout = 0;
+  69   1        pid->iout = 0;
+  70   1        pid->dout = 0;
+  71   1        pid->out  = 0;
+  72   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    935    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     48    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      49
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

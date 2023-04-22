@@ -1,0 +1,299 @@
+C51 COMPILER V9.60.7.0   SHT11                                                             04/22/2023 11:02:33 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE SHT11
+OBJECT MODULE PLACED IN .\Objects\sht11.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE sht11.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\sht
+                    -11.lst) TABS(2) OBJECT(.\Objects\sht11.obj)
+
+line level    source
+
+   1          #include"sht11.h"
+   2          
+   3          //写字节程序
+   4          char s_write_byte(unsigned char sensor,unsigned char value)    
+   5          { 
+   6   1        unsigned char i,error=0; 
+   7   1        for (i=0x80;i>0;i/=2)             //shift bit for masking 高位为1，循环右移
+   8   1        { 
+   9   2          if (i&value)
+  10   2            switch(sensor)                     //选择发送设备
+  11   2              { 
+  12   3                case SHT11_1 : Sht11DATA1=1; break;      //和要发送的数相与，结果为发送的位
+  13   3                case SHT11_2 : Sht11DATA2=1; break; 
+  14   3              }
+  15   2            else Sht11DATA1=0,Sht11DATA2=0;                        
+  16   2            SCK=1;                          
+  17   2            _nop_();_nop_();_nop_();        //延时3us 
+  18   2            SCK=0;
+  19   2        }
+  20   1        switch(sensor)              //释放数据线
+  21   1          { 
+  22   2            case SHT11_1 : Sht11DATA1=1; break;
+  23   2            case SHT11_2 : Sht11DATA2=1; break; 
+  24   2          }                         
+  25   1        SCK=1;      
+  26   1        switch(sensor)             //检查应答信号，确认通讯正常
+  27   1          { 
+  28   2            case SHT11_1 : error=Sht11DATA1; break;
+  29   2            case SHT11_2 : error=Sht11DATA2; break; 
+  30   2          }                     
+  31   1        _nop_();_nop_();_nop_();
+  32   1        SCK=0;        
+  33   1        switch(sensor)             
+  34   1          { 
+  35   2            case SHT11_1 : Sht11DATA1=1; break;
+  36   2            case SHT11_2 : Sht11DATA2=1; break; 
+  37   2          } 
+  38   1        return error;                     //error=1 通讯错误
+  39   1      }
+  40          
+  41          //读字节程序
+  42          char s_read_byte(unsigned char sensor,unsigned char ack)
+  43          //----------------------------------------------------------------------------------
+  44          { 
+  45   1        unsigned char i,val=0;            
+  46   1        switch(sensor)                        //释放数据线
+  47   1        { 
+  48   2          case SHT11_1 : Sht11DATA1=1; break;
+  49   2          case SHT11_2 : Sht11DATA2=1; break; 
+  50   2        } 
+  51   1        for(i=0x80;i>0;i>>=1)                //高位为1，循环右移
+  52   1        { 
+  53   2          SCK=1;                         
+  54   2          switch(sensor)                    //读一位数据线的值  
+C51 COMPILER V9.60.7.0   SHT11                                                             04/22/2023 11:02:33 PAGE 2   
+
+  55   2            { 
+  56   3              case SHT11_1 :if(Sht11DATA1) val=(val|i); break;
+  57   3              case SHT11_2 :if(Sht11DATA2) val=(val|i); break;  
+  58   3            } 
+  59   2            SCK=0;       
+  60   2        }       
+  61   1        switch(sensor)                     //如果是校验，读取完后结束通讯；
+  62   1          { 
+  63   2            case SHT11_1 : Sht11DATA1=!ack; break;
+  64   2            case SHT11_2 : Sht11DATA2=!ack; break;  
+  65   2          }   
+  66   1        SCK=1;                            
+  67   1        _nop_();_nop_();_nop_();          //延时3us 
+  68   1        SCK=0;   
+  69   1        _nop_();_nop_();_nop_();       
+  70   1        switch(sensor)                    //释放数据线
+  71   1          { 
+  72   2            case SHT11_1 : Sht11DATA1=1; break;
+  73   2            case SHT11_2 : Sht11DATA2=1; break; 
+  74   2          } 
+  75   1        return val;
+  76   1      }
+  77          
+  78          //启动传输
+  79          void s_transstart(unsigned char sensor)
+  80          // generates a transmission start 
+  81          //       _____         ________
+  82          // DATA:      |_______|
+  83          //           ___     ___
+  84          // SCK : ___|   |___|   |______
+  85          { 
+  86   1          switch(sensor)             
+  87   1            { 
+  88   2              case SHT11_1 : Sht11DATA1=1; break;
+  89   2              case SHT11_2 : Sht11DATA2=1; break; 
+  90   2            } 
+  91   1          SCK=0;                                   //准备
+  92   1          _nop_();
+  93   1          SCK=1;
+  94   1          _nop_();
+  95   1          switch(sensor)             
+  96   1            { 
+  97   2              case SHT11_1 : Sht11DATA1=0; break;
+  98   2              case SHT11_2 : Sht11DATA2=0; break; 
+  99   2            } 
+ 100   1          _nop_();
+ 101   1          SCK=0; 
+ 102   1           _nop_();_nop_();_nop_();
+ 103   1          SCK=1;
+ 104   1          _nop_();
+ 105   1          switch(sensor)             
+ 106   1            { 
+ 107   2              case SHT11_1 : Sht11DATA1=1; break;
+ 108   2              case SHT11_2 : Sht11DATA2=1; break; 
+ 109   2            }    
+ 110   1          _nop_();
+ 111   1          SCK=0;     
+ 112   1      }
+ 113          
+ 114          
+ 115          //连接复位
+ 116          void s_connectionreset(unsigned char sensor)
+C51 COMPILER V9.60.7.0   SHT11                                                             04/22/2023 11:02:33 PAGE 3   
+
+ 117          // communication reset: DATA-line=1 and at least 9 SCK cycles followed by transstart
+ 118          //       _____________________________________________________         ________
+ 119          // DATA:                                                      |_______|
+ 120          //          _    _    _    _    _    _    _    _    _        ___     ___
+ 121          // SCK : __| |__| |__| |__| |__| |__| |__| |__| |__| |______|   |___|   |______
+ 122          { 
+ 123   1        unsigned char i; 
+ 124   1        switch(sensor)             
+ 125   1          { 
+ 126   2            case SHT11_1 : Sht11DATA1=1; break;
+ 127   2            case SHT11_2 : Sht11DATA2=1; break; 
+ 128   2          }   
+ 129   1        SCK=0;                    //准备
+ 130   1        for(i=0;i<9;i++)                  //DATA保持高，SCK时钟触发9次，发送启动传输，通迅即复位
+ 131   1        { 
+ 132   2          SCK=1;
+ 133   2            SCK=0;
+ 134   2        }
+ 135   1        s_transstart(sensor);                   //启动传输
+ 136   1      }
+ 137          
+ 138          
+ 139          //软复位程序
+ 140          char s_softreset(unsigned char sensor)
+ 141          // resets the sensor by a softreset 
+ 142          { 
+ 143   1        unsigned char error=0; 
+ 144   1        s_connectionreset(sensor);              //启动连接复位
+ 145   1        error+=s_write_byte(sensor,RESET);       //发送复位命令
+ 146   1        return error;                     //error=1 通讯错误
+ 147   1      }
+ 148          
+ 149          
+ 150          /*
+ 151          //读状态寄存器
+ 152          char s_read_statusreg(unsigned char *p_value, unsigned char *p_checksum)
+ 153          //----------------------------------------------------------------------------------
+ 154          // reads the status register with checksum (8-bit)
+ 155          { 
+ 156            unsigned char error=0;
+ 157            s_transstart();                   //transmission start
+ 158            error=s_write_byte(STATUS_REG_R); //send command to sensor
+ 159            *p_value=s_read_byte(ACK);        //read status register (8-bit)
+ 160            *p_checksum=s_read_byte(noACK);   //read checksum (8-bit) 
+ 161            return error;                     //error=1 in case of no response form the sensor
+ 162          }
+ 163          
+ 164          //写状态寄存器
+ 165          char s_write_statusreg(unsigned char *p_value)
+ 166          // writes the status register with checksum (8-bit)
+ 167          { 
+ 168            unsigned char error=0;
+ 169            s_transstart();                   //transmission start
+ 170            error+=s_write_byte(STATUS_REG_W);//send command to sensor
+ 171            error+=s_write_byte(*p_value);    //send value of status register
+ 172            return error;                     //error>=1 in case of no response form the sensor
+ 173          }                             */         
+ 174          
+ 175                     
+ 176          //温湿度测量
+ 177          char s_measure(unsigned char sensor,unsigned char *p_value, unsigned char *p_checksum, unsigned char mode)
+ 178          // 进行温度或者湿度转换，由参数mode决定转换内容；
+C51 COMPILER V9.60.7.0   SHT11                                                             04/22/2023 11:02:33 PAGE 4   
+
+ 179          { 
+ 180   1      //  enum {TEMP,HUMI};    //已经在头文件中定义
+ 181   1         unsigned error=0;
+ 182   1         unsigned int i;
+ 183   1      
+ 184   1        s_transstart(sensor);                   //启动传输
+ 185   1        switch(mode)                     //选择发送命令
+ 186   1          { 
+ 187   2          case TEMP : error+=s_write_byte(sensor,MEASURE_TEMP); break;       //测量温度
+ 188   2            case HUMI : error+=s_write_byte(sensor,MEASURE_HUMI); break;       //测量湿度
+ 189   2            default     : break; 
+ 190   2        }
+ 191   1        for (i=0;i<65535;i++)
+ 192   1        {
+ 193   2          if(sensor == SHT11_1)if(Sht11DATA1==0) break; //等待测量结束
+ 194   2          if(sensor == SHT11_2)if(Sht11DATA2==0) break; //等待测量结束
+ 195   2        }
+ 196   1        if(sensor == SHT11_1)if(Sht11DATA1) error+=1;                // 如果长时间数据线没有拉低，说明测量错误 
+ 197   1        if(sensor == SHT11_2)if(Sht11DATA2) error+=1;   
+ 198   1        *(p_value) =s_read_byte(sensor,ACK);    //读第一个字节，高字节 (MSB)
+ 199   1        *(p_value+1)=s_read_byte(sensor,ACK);    //读第二个字节，低字节 (LSB)
+ 200   1        *p_checksum =s_read_byte(sensor,noACK); //read CRC校验码
+ 201   1        return error;          // error=1 通讯错误
+ 202   1      }
+ 203          
+ 204          //温湿度值标度变换及温度补偿
+ 205          void calc_sth10(float *p_humidity ,float *p_temperature)
+ 206          { 
+ 207   1        code const float C1=-4.0;              // 12位湿度精度 修正公式
+ 208   1        code const float C2=+0.0405;           // 12位湿度精度 修正公式
+ 209   1        code const float C3=-0.0000028;        // 12位湿度精度 修正公式
+ 210   1      //  code const float T1=+0.01;             // 14位温度精度 5V条件  修正公式
+ 211   1      //  code const float T2=+0.00008;          // 14位温度精度 5V条件  修正公式
+ 212   1      
+ 213   1         xdata float rh=*p_humidity;             // rh:      12位 湿度 
+ 214   1         xdata float t=*p_temperature;           // t:       14位 温度
+ 215   1         xdata float rh_lin;                     // rh_lin: 湿度 linear值
+ 216   1         xdata float rh_true;                    // rh_true: 湿度 ture值
+ 217   1         xdata float t_C;                        // t_C   : 温度 ℃
+ 218   1      
+ 219   1        t_C=t*0.01 - 40;                  //补偿温度
+ 220   1        rh_lin=C3*rh*rh + C2*rh + C1;     //相对湿度非线性补偿
+ 221   1      //  rh_true=(t_C-25)*(T1+T2*rh)+rh_lin;   //相对湿度对于温度依赖性补偿
+ 222   1        rh_true=rh_lin-3;   //取消湿度补偿
+ 223   1        if(rh_true <16.9)rh_true-=1;
+ 224   1          if(rh_true >71.9)rh_true+=1;
+ 225   1            if(rh_true >86.9)rh_true+=1;
+ 226   1              if(rh_true >95.9)rh_true+=1;
+ 227   1      
+ 228   1        if(rh_true>100)rh_true=100;       //湿度最大修正
+ 229   1        if(rh_true<0.1)rh_true=0.1;       //湿度最小修正
+ 230   1      
+ 231   1        *p_temperature=t_C;               //返回温度结果
+ 232   1        *p_humidity=rh_true;              //返回湿度结果
+ 233   1      }
+ 234          
+ 235          //从相对温度和湿度计算露点
+ 236          /*float calc_dewpoint(float h,float t)
+ 237          {
+ 238            float logEx,dew_point;
+ 239            logEx=0.66077+7.5*t/(237.3+t)+(log10(h)-2);
+ 240            dew_point = (logEx - 0.66077)*237.3/(0.66077+7.5-logEx);
+C51 COMPILER V9.60.7.0   SHT11                                                             04/22/2023 11:02:33 PAGE 5   
+
+ 241            return dew_point;
+ 242          }   
+ 243          */
+ 244          
+ 245          void TH_output(unsigned char sensor,int *T,int *H)
+ 246          {
+ 247   1      
+ 248   1        value humi_val,temp_val;    //定义两个共同体，一个用于湿度，一个用于温度
+ 249   1      //  float dew_point;          //用于记录露点值
+ 250   1        unsigned char error;        //用于检验是否出现错误
+ 251   1        unsigned char checksum;     //CRC   
+ 252   1        
+ 253   1          error=0;             //初始化error=0，即没有错误
+ 254   1          error+=s_measure(sensor,(unsigned char*)&temp_val.i,&checksum,TEMP); //温度测量
+ 255   1          error+=s_measure(sensor,(unsigned char*)&humi_val.i,&checksum,HUMI); //湿度测量
+ 256   1            if(error!=0) s_connectionreset(sensor);                 ////如果发生错误，系统复位
+ 257   1            else
+ 258   1            { 
+ 259   2            humi_val.f=(float)humi_val.i;                   //转换为浮点数
+ 260   2              temp_val.f=(float)temp_val.i;                   //转换为浮点数
+ 261   2              calc_sth10(&humi_val.f,&temp_val.f);            //修正相对湿度及温度
+ 262   2      //      dew_point=calc_dewpoint(humi_val.f,temp_val.f); //计算e dew_point
+ 263   2              *T=temp_val.f*10;
+ 264   2              *H=humi_val.f*10;
+ 265   2            }
+ 266   1      }
+ 267          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1229    ----
+   CONSTANT SIZE    =     12    ----
+   XDATA SIZE       =   ----      28
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      25
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

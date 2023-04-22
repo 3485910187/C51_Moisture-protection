@@ -1,0 +1,11 @@
+".\Objects\main.obj",
+".\Objects\12864.obj",
+".\Objects\delay.obj",
+".\Objects\pwm.obj",
+".\Objects\serial.obj",
+".\Objects\sht11.obj",
+".\Objects\pid.obj",
+".\Objects\motor.obj" 
+TO ".\Objects\Template" 
+PRINT(".\Listings\Template.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 

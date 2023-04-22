@@ -1,0 +1,70 @@
+C51 COMPILER V9.60.7.0   MOTOR                                                             04/22/2023 11:02:33 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MOTOR
+OBJECT MODULE PLACED IN .\Objects\motor.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE motor.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\mot
+                    -or.lst) TABS(2) OBJECT(.\Objects\motor.obj)
+
+line level    source
+
+   1          #include"motor.h"
+   2          
+   3          int count = 0,motor_a = 0,motor_time = 0;
+   4          float pid_out = 50,motor_speed;
+   5          
+   6          void motor_init()
+   7          {
+   8   1                                      //16微秒@11.0592MHz
+   9   1        TMOD = 0x21; //定时器0和2开启；
+  10   1        TH1 = 0xff;//高四位初值
+  11   1        TL1 = 0X9b;//低四位初值
+  12   1        EA = 1;      //开总中断
+  13   1        ET1 = 1;     //T1开时定时器溢出
+  14   1        TR1 = 1;     //开启定时器
+  15   1      
+  16   1        //外部中断测速
+  17   1        
+  18   1          EX1 = 1;    //开启1号外部中断
+  19   1       
+  20   1        //控制寄存器TCON
+  21   1          IT1 = 1;   // 设置外部中断触发方式.  // 0-低电平触发  // 1-负跳变触发
+  22   1        
+  23   1          EX0 = 1;    //开启0号外部中断
+  24   1       
+  25   1        //控制寄存器TCON
+  26   1          IT0 = 1;   // 设置外部中断触发方式.  // 0-低电平触发  // 1-负跳变触发
+  27   1      }
+  28          
+  29          void timer_T1() interrupt 3       //定时器1中断函数
+  30          {
+  31   1          TH1=0xc0;//0xc0
+  32   1          TL1=0Xc0;//0xc0
+  33   1          count++;
+  34   1      //    if(count<(unsigned int)pid_out)   //pwm1输出(unsigned int)pid_out
+  35   1      //     motor_out=1;
+  36   1      //    else
+  37   1      //     motor_out=0;
+  38   1      //    if(count>1000) count=0; 
+  39   1      }
+  40          
+  41          void int1() interrupt 2
+  42          {
+  43   1        motor_a++;
+  44   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     56    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     14    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.60.7.0   MOTOR                                                             04/22/2023 11:02:33 PAGE 2   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
