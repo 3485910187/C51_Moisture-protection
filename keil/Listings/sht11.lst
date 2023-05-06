@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   SHT11                                                             04/22/2023 11:02:33 PAGE 1   
+C51 COMPILER V9.60.7.0   SHT11                                                             05/06/2023 18:32:24 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE SHT11
@@ -62,7 +62,7 @@ line level    source
   52   1        { 
   53   2          SCK=1;                         
   54   2          switch(sensor)                    //读一位数据线的值  
-C51 COMPILER V9.60.7.0   SHT11                                                             04/22/2023 11:02:33 PAGE 2   
+C51 COMPILER V9.60.7.0   SHT11                                                             05/06/2023 18:32:24 PAGE 2   
 
   55   2            { 
   56   3              case SHT11_1 :if(Sht11DATA1) val=(val|i); break;
@@ -126,7 +126,7 @@ line level    source
  114          
  115          //连接复位
  116          void s_connectionreset(unsigned char sensor)
-C51 COMPILER V9.60.7.0   SHT11                                                             04/22/2023 11:02:33 PAGE 3   
+C51 COMPILER V9.60.7.0   SHT11                                                             05/06/2023 18:32:24 PAGE 3   
 
  117          // communication reset: DATA-line=1 and at least 9 SCK cycles followed by transstart
  118          //       _____________________________________________________         ________
@@ -190,7 +190,7 @@ line level    source
  176          //温湿度测量
  177          char s_measure(unsigned char sensor,unsigned char *p_value, unsigned char *p_checksum, unsigned char mode)
  178          // 进行温度或者湿度转换，由参数mode决定转换内容；
-C51 COMPILER V9.60.7.0   SHT11                                                             04/22/2023 11:02:33 PAGE 4   
+C51 COMPILER V9.60.7.0   SHT11                                                             05/06/2023 18:32:24 PAGE 4   
 
  179          { 
  180   1      //  enum {TEMP,HUMI};    //已经在头文件中定义
@@ -254,7 +254,7 @@ line level    source
  238            float logEx,dew_point;
  239            logEx=0.66077+7.5*t/(237.3+t)+(log10(h)-2);
  240            dew_point = (logEx - 0.66077)*237.3/(0.66077+7.5-logEx);
-C51 COMPILER V9.60.7.0   SHT11                                                             04/22/2023 11:02:33 PAGE 5   
+C51 COMPILER V9.60.7.0   SHT11                                                             05/06/2023 18:32:24 PAGE 5   
 
  241            return dew_point;
  242          }   

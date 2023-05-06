@@ -206,12 +206,12 @@ void main()
 		TH_output(SHT11_2,&T,&OHumidity);
 		lcd_display();
 		led();
-		if(time>=100){time=0;serial_send();}   //两秒发送
+	//	if(time>=100){time=0;serial_send();}   //两秒发送
 		serial_re();
 		
-//		sprintf(aaa,"%.2f,%.2f",set_speed,motor_speed);
-//		Sendstring(1,aaa);		
-//		Sendstring(1,"\r\n");		
+		sprintf(aaa,"%.2f,%.2f",set_speed,motor_speed);
+		Sendstring(1,aaa);		
+		Sendstring(1,"\r\n");		
 		
 	}
 }
