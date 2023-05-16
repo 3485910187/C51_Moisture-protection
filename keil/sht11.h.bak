@@ -19,7 +19,7 @@
 sbit SCK = P2^7;
 
 enum {TEMP,HUMI};
-extern unsigned char SHT11_1,SHT11_2;     //定义设备枚举sensor
+extern unsigned char SHT11_1 = 5,SHT11_2=6;     //定义设备枚举sensor
 
 typedef xdata union		   //定义共同类型
 { unsigned int i;	   //i表示测量得到的温湿度数据（int 形式保存的数据） 

@@ -1,7 +1,5 @@
 #include"sht11.h"
 
-unsigned char SHT11_1 = 5,SHT11_2=6;         //定义设备枚举sensor
-
 void Writbit_PX(char bite,char dat)
 {
 		PX=dat ? (PX |= (0x01 << (bite%8))) : (PX &= ~(0x01 << (bite%8)));

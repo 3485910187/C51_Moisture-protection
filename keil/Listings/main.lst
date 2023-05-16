@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   MAIN                                                              05/06/2023 18:32:24 PAGE 1   
+C51 COMPILER V9.60.7.0   MAIN                                                              05/16/2023 15:33:58 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
@@ -62,7 +62,7 @@ line level    source
   52   3          {
   53   4            case 0: sys_mod=1; break; 
   54   4            case 1: if(Angle>-90&&sys_mod==1)Angle--; break;  
-C51 COMPILER V9.60.7.0   MAIN                                                              05/06/2023 18:32:24 PAGE 2   
+C51 COMPILER V9.60.7.0   MAIN                                                              05/16/2023 15:33:58 PAGE 2   
 
   55   4            case 2: if(Threshold>0)Threshold--; break;        
   56   4          }
@@ -126,7 +126,7 @@ line level    source
  114          
  115          void serial_send()
  116          {
-C51 COMPILER V9.60.7.0   MAIN                                                              05/06/2023 18:32:24 PAGE 3   
+C51 COMPILER V9.60.7.0   MAIN                                                              05/16/2023 15:33:58 PAGE 3   
 
  117   1        Sendstring(1,"Id Humidity    ");
  118   1        if(IHumidity<1000){
@@ -190,7 +190,7 @@ line level    source
  176   3          }
  177   2          if(y<4)               //ÓÐÖ¸Áî
  178   2          {
-C51 COMPILER V9.60.7.0   MAIN                                                              05/06/2023 18:32:24 PAGE 4   
+C51 COMPILER V9.60.7.0   MAIN                                                              05/16/2023 15:33:58 PAGE 4   
 
  179   3            switch(y)
  180   3            {
@@ -254,7 +254,7 @@ line level    source
 MODULE INFORMATION:   STATIC OVERLAYABLE
    CODE SIZE        =   2130    ----
    CONSTANT SIZE    =    183    ----
-C51 COMPILER V9.60.7.0   MAIN                                                              05/06/2023 18:32:24 PAGE 5   
+C51 COMPILER V9.60.7.0   MAIN                                                              05/16/2023 15:33:58 PAGE 5   
 
    XDATA SIZE       =     23    ----
    PDATA SIZE       =   ----    ----
